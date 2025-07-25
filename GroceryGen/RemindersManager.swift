@@ -10,6 +10,7 @@ import EventKit
 
 class RemindersManager: ObservableObject {
     private let eventStore = EKEventStore()
+    @Published var taskCompletionStatus: TaskCompletionStatus = .none
     
     // Request access based on iOS version
     func requestAccess(completion: @escaping (Bool) -> Void) {
@@ -33,12 +34,14 @@ class RemindersManager: ObservableObject {
         requestAccess { granted in
             guard granted else {
                 print("Reminders access not granted.")
+                self.taskCompletionStatus = .error("Reminders access not granted.")
                 return
             }
             
             // Get the appropriate source (e.g., iCloud)
             guard let source = self.eventStore.defaultCalendarForNewReminders()?.source else {
                 print("Could not determine default reminder source.")
+                self.taskCompletionStatus = .error("Could not determine default reminder source.")
                 return
             }
             
@@ -51,6 +54,7 @@ class RemindersManager: ObservableObject {
                 try self.eventStore.saveCalendar(shoppingList, commit: true)
             } catch {
                 print("Failed to create new reminders list: \(error.localizedDescription)")
+                self.taskCompletionStatus = .error("Failed to create new reminders list: \(error.localizedDescription)")
                 return
             }
             
@@ -64,10 +68,12 @@ class RemindersManager: ObservableObject {
                     try self.eventStore.save(reminder, commit: true)
                 } catch {
                     print("Failed to save reminder '\(item)': \(error.localizedDescription)")
+                    self.taskCompletionStatus = .error("Failed to save reminder '\(item)': \(error.localizedDescription)")
                 }
             }
             
             print("✅ Shopping list '\(title)' created with \(items.count) items.")
+            self.taskCompletionStatus = .success("✅ Shopping list '\(title)' created with \(items.count) items.")
         }
     }
 }

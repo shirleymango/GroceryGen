@@ -18,6 +18,15 @@ struct ContentView: View {
     // Selection state
     @State private var selectedIngredients: Set<String> = []
     
+    // Computed property for status message
+    var statusMessage: String? {
+        switch remindersManager.taskCompletionStatus {
+        case .success(let msg): return msg
+        case .error(let msg): return msg
+        case .none: return nil
+        }
+    }
+    
     var body: some View {
         NavigationView {
             VStack {
@@ -28,16 +37,24 @@ struct ContentView: View {
                 .environment(\.editMode, .constant(.active)) // enable multi-selection
                 .navigationTitle("Select Ingredients")
                 
+                // Completion Status Message
+                if statusMessage != nil {
+                    Text(statusMessage!)
+                }
+                
                 // Create Shopping List button
                 Button(action: {
                     if selectedIngredients.isEmpty {
                         print("⚠️ No ingredients selected.")
+                        remindersManager.taskCompletionStatus = .error("⚠️ No ingredients selected.")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { remindersManager.taskCompletionStatus = .none }
                     } else {
                         remindersManager.createShoppingList(
                             title: "GroceryGen List",
                             items: Array(selectedIngredients)
                         )
                         selectedIngredients.removeAll() // Optional: clear selection after
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { remindersManager.taskCompletionStatus = .none }
                     }
                 }) {
                     Text("Create Shopping List")
