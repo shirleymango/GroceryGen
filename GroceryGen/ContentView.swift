@@ -38,8 +38,18 @@ struct ContentView: View {
                 .navigationTitle("Select Ingredients")
                 
                 // Completion Status Message
-                if statusMessage != nil {
-                    Text(statusMessage!)
+                if let message = statusMessage {
+                    Text(message)
+                        .foregroundColor(.blue)
+                        .padding()
+                        .transition(.opacity)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                withAnimation {
+                                    remindersManager.taskCompletionStatus = .none
+                                }
+                            }
+                        }
                 }
                 
                 // Create Shopping List button
@@ -47,14 +57,12 @@ struct ContentView: View {
                     if selectedIngredients.isEmpty {
                         print("⚠️ No ingredients selected.")
                         remindersManager.taskCompletionStatus = .error("⚠️ No ingredients selected.")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { remindersManager.taskCompletionStatus = .none }
                     } else {
                         remindersManager.createShoppingList(
                             title: "GroceryGen List",
                             items: Array(selectedIngredients)
                         )
                         selectedIngredients.removeAll() // Optional: clear selection after
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { remindersManager.taskCompletionStatus = .none }
                     }
                 }) {
                     Text("Create Shopping List")
